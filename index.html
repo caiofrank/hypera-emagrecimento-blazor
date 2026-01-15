@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hypera-emagrecimento-blazor</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="hypera-emagrecimento-blazor.styles.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div id="app">
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    
+    <!-- Chart.js e Plugin DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    
+    <script>
+        // Registrar o plugin globalmente
+        Chart.register(ChartDataLabels);
+
+        window.setupChart = (canvasId, config) => {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            // Destruir gráfico anterior se existir
+            if (window[canvasId] instanceof Chart) {
+                window[canvasId].destroy();
+            }
+
+            // Lógica para injetar formatação de moeda se solicitado
+            if (config.options && config.options.isCurrency) {
+                const currencyFormatter = (value) => {
+                    return new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                    }).format(value);
+                };
+
+                // Configurar Eixo Y
+                if (!config.options.scales) config.options.scales = {};
+                if (!config.options.scales.y) config.options.scales.y = {};
+                if (!config.options.scales.y.ticks) config.options.scales.y.ticks = {};
+                
+                config.options.scales.y.ticks.callback = function(value) {
+                    return currencyFormatter(value);
+                };
+
+                // Configurar Tooltips
+                if (!config.options.plugins) config.options.plugins = {};
+                if (!config.options.plugins.tooltip) config.options.plugins.tooltip = {};
+                if (!config.options.plugins.tooltip.callbacks) config.options.plugins.tooltip.callbacks = {};
+                
+                config.options.plugins.tooltip.callbacks.label = function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                        label += currencyFormatter(context.parsed.y);
+                    }
+                    return label;
+                };
+                
+                // Configurar DataLabels (rótulos em cima dos pontos)
+                if (!config.options.plugins.datalabels) config.options.plugins.datalabels = {};
+                config.options.plugins.datalabels.formatter = function(value) {
+                    return currencyFormatter(value);
+                };
+            }
+
+            window[canvasId] = new Chart(ctx, config);
+        }
+    </script>
+    <script src="_framework/blazor.webassembly.js?v=1.0.1"></script>
+</body>
+
+</html>
